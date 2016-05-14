@@ -1,0 +1,73 @@
+#' Create a data.frame table (dft)
+#'
+#' Create a table with a data.frame structure and optional proportion,
+#' percentage, and descriptive statistics columns. Can be used by its shorthand
+#' alias \code{dft}.
+#'
+#' @param data1 a vector or data.frame column
+#' @param prop logical, if \code{TRUE} returns an additional proportion column
+#' @param perc logical, if \code{TRUE} returns an additional percentage column
+#' @param by numeric variable to return descriptive statistics for
+#' @aliases dft
+#'
+#' @return a data.frame table with optional proportion, percentage, and
+#'   descriptive statistics columns
+#' @import psych
+#' @export
+#'
+#' @examples
+#' data_frame_table(iris2$Species)
+#' data_frame_table(iris2$Species, by = iris2$Sepal.Length)
+#'
+#' # Or using shorthand:
+#'
+#' dft(iris2$Species)
+#' dft(iris2$Species, by = iris2$Sepal.Length)
+#'
+data_frame_table <- function(data1, prop = TRUE, perc = TRUE, by = NULL){
+  t    <- table(data1)
+  dft  <- data.frame(t)
+
+  if(ncol(dft) == 2) {
+    names(dft) <- c("group", "n")
+  } else if(ncol(dft) > 2){
+    names(dft)[length(dft)] <- "n"
+  }
+
+  if(prop) {
+    prop <- table_prop(t)
+    dft  <- data.frame(dft, prop)
+  }
+  if(perc) {
+    perc <- table_perc(t)
+    dft <- data.frame(dft, perc)
+  }
+  if(!is.null(by)) {
+    descr <- describeBy(by, data1, mat = T)
+    dft <- cbind(dft, descr[, 5:15])
+  }
+
+  return(dft)
+}
+
+# data_frame_table helper function - proportions
+# test - print(table_prop(table(iris2$Species)))
+table_prop <- function(table){
+  table.prop <- as.vector(table)/sum(table)
+}
+
+# data_frame_table helper function - percentages
+# test - print(table_perc(table(iris2$Species)))
+table_perc <- function(table){
+  table.prop <- table_prop(table)
+  table.perc <- format(round(table.prop*100, 1), nsmall = 1)
+  table.perc <- gsub("$", "%", table.perc)
+}
+
+
+#' @rdname data_frame_table
+#' @export
+dft <- function(data1, prop = TRUE, perc = TRUE, by = NULL) {
+  dft = data_frame_table(data1, prop = prop, perc = perc, by = by)
+  return(dft)
+}
